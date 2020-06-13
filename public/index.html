@@ -1,19 +1,22 @@
-
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pete's Vanquis Bank Game</title>
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/7.15.0/firebase-app.js"></script>
+	<script src="/__/firebase/7.15.1/firebase-app.js"></script>
+	<script src="/__/firebase/7.15.1/firebase-analytics.js"></script>
     <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/7.15.0/firebase-auth.js"></script>
-    <script defer src="/__/firebase/7.15.0/firebase-database.js"></script>
-    <script defer src="/__/firebase/7.15.0/firebase-messaging.js"></script>
-    <script defer src="/__/firebase/7.15.0/firebase-storage.js"></script>
+    <script defer src="/__/firebase/7.15.1/firebase-auth.js"></script>
+    <script defer src="/__/firebase/7.15.1/firebase-database.js"></script>
+    <script defer src="/__/firebase/7.15.1/firebase-messaging.js"></script>
+    <script defer src="/__/firebase/7.15.1/firebase-storage.js"></script>
     <!-- initialize the SDK after all desired features are loaded -->
-    <script defer src="/__/firebase/init.js"></script>
+    <script src="/__/firebase/init.js"></script>
+    <script src="CanvasInput.min.js"> </script>
+	<script src="CanvasInput.js"> </script>
+    
+    
     <style media="screen">
       body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
       #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
@@ -31,29 +34,59 @@
   </head>
 <body onload="startGame()">
 <script>
+	firebase.analytics();
+</script>
+<div id="loginArea">
+	Welcome to the Vanquis Game v0.1 Alpha </br>
+	<p id="userpass">Sign in: </p><br>
+	<a if="forgotPW" target="_blank" href="./forgot.html">Forgot Password? Click here</a>
+	<canvas id="usernamecanvas" width="350" height="100"></canvas>
+	<canvas id="passwordcanvas" width="350" height="100"></canvas>
+	</br>
+	<p id="userpass">Or...</p>
+	<button onclick="register()">Register </br> (requires Vanquis Bank Email Account)</button>
+	<br>
+</div>
+<div id="emailVerify">
+	<button onclick="sendEmailVerification()">Resend Email Verification</button>
+</div>
+
+<div id="signup">
+	<label for="fname">Email:</label>
+	<input type="text" id="inp_email" name="email"><br><br>
+	<label for="fname">Password:</label>
+	<input type="password" id="inp_pw" name="pw"><br><br>
+	<button onclick="handleSignUp()">Sign up</button>
+</div>
+<script>
 var myGamePiece;
 var myObstacles = [];
 var myTargets = [];
 var myScore;
 //target is selected
-var targetSelected = true
-var selectedTarget = -1
+var targetSelected = true;
+var selectedTarget = -1;
 
 //background and stall front images
-var mainBackgoundImg = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/mainCanvasBackground.png?alt=media&token=ecef3fac-ab06-4375-80f0-e3d4d3b9ff68"
-var stallBottom = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/stallBottom.png?alt=media&token=f0e58bad-6520-44c3-a410-645fa4f34ac9"
+var mainBackgoundImg = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/mainCanvasBackground.png?alt=media&token=ecef3fac-ab06-4375-80f0-e3d4d3b9ff68";
+var stallBottom = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/stallBottom.png?alt=media&token=f0e58bad-6520-44c3-a410-645fa4f34ac9";
 
 //target images
-var targetImg0 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target1.png?alt=media&token=396992c3-5dbb-4655-b53e-18f974669891" 
-var targetImg1 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target2.png?alt=media&token=2dc6ee00-6c33-4175-aefa-780a45397206"
-var targetImg2 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target3.png?alt=media&token=85448202-89f9-43ca-a13b-0a52cce7a207"
-var targetImg3 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target4.png?alt=media&token=efd010c3-01bf-474a-b2d4-33af69be5692"
-var targetImg4 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target5.png?alt=media&token=f2b96a09-4354-4df1-a9f8-1c2e479bdcf5"
-var targetImg5 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target6.png?alt=media&token=cb792400-876b-4b17-8840-df563c6cc472"
+var targetImg0 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target1.png?alt=media&token=396992c3-5dbb-4655-b53e-18f974669891";
+var targetImg1 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target2.png?alt=media&token=2dc6ee00-6c33-4175-aefa-780a45397206";
+var targetImg2 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target3.png?alt=media&token=85448202-89f9-43ca-a13b-0a52cce7a207";
+var targetImg3 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target4.png?alt=media&token=efd010c3-01bf-474a-b2d4-33af69be5692";
+var targetImg4 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target5.png?alt=media&token=f2b96a09-4354-4df1-a9f8-1c2e479bdcf5";
+var targetImg5 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target6.png?alt=media&token=cb792400-876b-4b17-8840-df563c6cc472";
 
 //small and large sign target position when coming up
-var targetOddY = 180
-var targetEventY = 255
+var targetOddY = 180;
+var targetEventY = 255;
+var interval;
+//Sign in details
+var email;
+var password;
+var username;
 
 function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
@@ -78,18 +111,130 @@ function startGame() {
     myTargets.push(new component(70, 150, targetImg5, 285, 330, "image","target5"));
 
 
-//Set Stall image
+    //Set Stall image
     gameStalls = new component(325, 140, stallBottom, 45, 330, "image");
     
+	//score
     myScore = new component("20px", "Consolas", "white", 440, 416, "text");
+    
+    //Questions remaining
+    myRemainingQs = new component("10px", "Consolas", "black", 340, 30, "text");
+    questions = 6;
+    
+	//user
+	loggedInUser = new component("10px", "Consolas", "black", 30, 30, "text");
+	
+	//Get login areas and hide them
+	var loginArea = document.getElementById("loginArea")
+	loginArea.style.display = "none";
+	var emailVerify = document.getElementById("emailVerify")
+	emailVerify.style.display = "none";
+	var signup = document.getElementById("signup")
+	signup.style.display = "none";
+	
+    firebase.auth().onAuthStateChanged(function(user) { 
 
-    myGameArea.start();
+                    if (user) {
+					//remove login things.
+						loginArea.style.display = "none";
+						emailVerify.style.display = "none";
+						signup.style.display = "none";
+                      // User is signed in.
+                      var displayName = user.displayName;
+                      email = user.email;
+                      var emailVerified = user.emailVerified;
+                      var photoURL = user.photoURL;
+                      var isAnonymous = user.isAnonymous;
+                      var uid = user.uid;
+                      var providerData = user.providerData;
+					  if(emailVerified){
+						myGameArea.start();
+					  }else{
+						alert("Sorry, you need to verify your email to play this game. Please check your inbox.");
+						emailVerify.style.display = "block";
+					  }					  					  					  
+                    }else{
+						//Please log in
+						myGameArea.loginEmail();
+						loginArea.style.display = "block";
+					}
 
-
+     });
+    
 }
+
+function register() {
+	var loginArea = document.getElementById("loginArea")
+	loginArea.style.display = "none";
+	var emailVerify = document.getElementById("emailVerify")
+	emailVerify.style.display = "none";
+	var signup = document.getElementById("signup")
+	signup.style.display = "block";
+}
+
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
+    loginEmail : function() {
+            var canv = document.getElementById("usernamecanvas");
+            canv.style.display = "block";
+            var input = new CanvasInput({
+                canvas: document.getElementById("usernamecanvas"),
+                 fontSize: 18,
+                  fontFamily: 'Arial',
+                  fontColor: '#212121',
+                  fontWeight: 'bold',
+                  width: 300,
+                  padding: 8,
+                  borderWidth: 1,
+                  borderColor: '#000',
+                  borderRadius: 3,
+                  boxShadow: '1px 1px 0px #fff',
+                  innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
+                  placeHolder: 'Please enter your email...',
+                  onsubmit: function() {
+                  var canv = document.getElementById("usernamecanvas")
+                    this.context = canv.getContext("2d");
+                    this.context.clearRect(0, 0, 350, 100);
+                    canv.style.display = "none";
+                    email = input.value();
+                    myGameArea.loginPassword();
+                  } 
+                  
+            });
+    },
+    loginPassword : function() {
+        var canv = document.getElementById("passwordcanvas");
+        canv.style.display = "block";
+        var input2 = new CanvasInput({
+                canvas: document.getElementById("passwordcanvas"),
+                 fontSize: 18,
+                  fontFamily: 'Arial',
+                  fontColor: '#212121',
+                  fontWeight: 'bold',
+                  width: 300,
+                  padding: 8,
+                  borderWidth: 1,
+                  borderColor: '#000',
+                  borderRadius: 3,
+                  boxShadow: '1px 1px 0px #fff',
+                  innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
+                  placeHolder: 'Enter your password...',
+                  type: 'password',
+                  onsubmit: function() {
+                    password = input2.value();
+                    if(toggleSignIn()){
+                        var canv = document.getElementById("loginArea")
+                        canv.style.display = "none";
+                        myGameArea.start();
+                    }else{
+                        alert("Sign in failed.");
+                        myGameArea.loginEmail();
+                    }
+                  } 
+            });
+    },
+    
     start : function() {
             img = new Image();
             img.src = mainBackgoundImg
@@ -97,10 +242,20 @@ var myGameArea = {
             this.canvas.height = 431;
             this.context = this.canvas.getContext("2d");
             document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-            this.frameNo = 0;
-            this.interval = setInterval(updateGameArea, 20);
+            if(this.frameNo == null || this.frameNo == 0){
+			this.frameNo = 0;
+			}
+            this.min = Math.ceil(0);
+            this.max = Math.floor(myTargets.length-1);
+            selectedTarget = Math.floor(Math.random() * (this.max - this.min + 1)) + this.min;
+            if(targetSelected == false){
+                targetSelected = true
+            }
+			
+			
+			//hit start then do this.
+            interval = setInterval(updateGameArea, 10);
             this.context.drawImage(img, 10, 10);
-
             //Add listeners
             var elemLeft = this.canvas.offsetLeft + this.canvas.clientLeft,
                 elemTop = this.canvas.offsetTop + this.canvas.clientTop
@@ -108,14 +263,11 @@ var myGameArea = {
             this.canvas.addEventListener('click', function(event) {
                 var x = event.pageX - elemLeft,
                     y = event.pageY - elemTop;
-                    alert('Click recorded ' + x + ' ' + y + 'target 0 Top '+ myTargets[0].y);
-                myTargets.forEach(function(element) {
-                    if (y > element.y && y < element.y + element.height 
-                        && x > element.x && x < element.x + element.width) {
-                        alert(element.name + " clicked");
+                    //alert('Click recorded ' + x + ' ' + y + 'target 0 Top '+ myTargets[0].y);
+                    if (y > myTargets[selectedTarget].y && y < myTargets[selectedTarget].y + myTargets[selectedTarget].height 
+                        && x > myTargets[selectedTarget].x && x < myTargets[selectedTarget].x + myTargets[selectedTarget].width) {
+                        targetSelected = false
                     }
-                });
-
             }, false);
         },
     clear : function() {
@@ -125,6 +277,154 @@ var myGameArea = {
         this.context.drawImage(img, 10, 10);
     }
 }
+
+    /**
+     * Handles the sign up button press.
+     */
+    function handleSignUp() {
+		email = document.getElementById("inp_email").value;
+		password = document.getElementById("inp_pw").value;
+      if (email.length < 4) {
+        alert('Please enter a valid email address.: '+email);
+        return false;
+      }
+      if (/@gmail.com\s*$/.test(email)) {
+        //is Vanquis email
+      } 
+      else{
+        alert("Please enter a Vanquis Bank email account");
+        return false;
+      }
+      if (password.length < 4) {
+        alert('Please enter a password.');
+        return false;
+      }
+      // Create user with email and pass.
+      // [START createwithemail]
+      firebase.auth().createUserWithEmailAndPassword(email, password).catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        // [START_EXCLUDE]
+        if (errorCode == 'auth/weak-password') {
+          alert('The password is too weak.');
+          return false;
+        } else {
+          alert(errorMessage);
+          return false;
+        }
+        console.log(error);
+        // [END_EXCLUDE]
+      });
+      // [END
+	sendEmailVerification();
+	startGame();
+    return true;
+    }
+
+    /**
+     * Handles the sign in button press.
+     */
+    function toggleSignIn() {
+      if (firebase.auth().currentUser) {
+        // [START signout]
+        firebase.auth().signOut();
+        // [END signout]
+      } else {
+        if (email.length < 4) {
+          alert('Please enter an email address.');
+          return false;
+        }
+        if (password.length < 4) {
+          alert('Please enter a password.');
+          return false;
+        }
+        // Sign in with email and pass.
+        // [START authwithemail]
+        firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
+          // Handle Errors here.
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          // [START_EXCLUDE]
+          if (errorCode === 'auth/wrong-password') {
+            alert('Wrong password.');
+            return false;
+          } else {
+            alert(errorMessage);
+            return false;
+          }
+          console.log(error);
+          return false;
+          // [END_EXCLUDE]
+        });
+        // [END authwithemail]
+      }
+      alert("Login Successful!");
+      return true;
+    }
+
+    /**
+     * Sends an email verification to the user.
+     */
+    function sendEmailVerification() {	
+		firebase.auth().onAuthStateChanged(function(user) {
+			if(user){
+				user.sendEmailVerification().then(function() {
+						alert('Email Verification Sent!');
+				}, function(error) {
+						alert('There was an error');
+						console.log(error);
+			});
+			
+			}
+		});
+      // [END sendemailverification]
+    }
+
+    /**
+     * initApp handles setting up UI event listeners and registering Firebase auth listeners:
+     *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
+     *    out, and that is where we update the UI.
+     */
+    function initApp() {
+      // Listening for auth state changes.
+      // [START authstatelistener]
+      firebase.auth().onAuthStateChanged(function(user) {
+        // [START_EXCLUDE silent]
+        document.getElementById('quickstart-verify-email').disabled = true;
+        // [END_EXCLUDE]
+        if (user) {
+          // User is signed in.
+          var displayName = user.displayName;
+          var email = user.email;
+          var emailVerified = user.emailVerified;
+          var photoURL = user.photoURL;
+          var isAnonymous = user.isAnonymous;
+          var uid = user.uid;
+          var providerData = user.providerData;
+          // [START_EXCLUDE]
+          document.getElementById('quickstart-sign-in-status').textContent = 'Signed in';
+          document.getElementById('quickstart-sign-in').textContent = 'Sign out';
+          document.getElementById('quickstart-account-details').textContent = JSON.stringify(user, null, '  ');
+          if (!emailVerified) {
+            document.getElementById('quickstart-verify-email').disabled = false;
+          }
+          // [END_EXCLUDE]
+        } else {
+          // User is signed out.
+          // [START_EXCLUDE]
+          document.getElementById('quickstart-sign-in-status').textContent = 'Signed out';
+          document.getElementById('quickstart-sign-in').textContent = 'Sign in';
+          document.getElementById('quickstart-account-details').textContent = 'null';
+          // [END_EXCLUDE]
+        }
+        // [START_EXCLUDE silent]
+        document.getElementById('quickstart-sign-in').disabled = false;
+        // [END_EXCLUDE]
+      });
+      // [END authstatelistener]
+    }
+
 
 function component(width, height, color, x, y, type, name) {
     this.type = type;
@@ -192,68 +492,52 @@ function component(width, height, color, x, y, type, name) {
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-    for (i = 0; i < myObstacles.length; i += 1) {
-        if (myGamePiece.crashWith(myObstacles[i])) {
-            return;
-        } 
-    }
-    myGameArea.clear();
-    myGameArea.frameNo += 1;
-    if (myGameArea.frameNo == 1 || everyinterval(150)) {
-        x = myGameArea.canvas.width;
-        minHeight = 20;
-        maxHeight = 200;
-        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
-        minGap = 50;
-        maxGap = 200;
-        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        myObstacles.push(new component(10, height, "green", x, 0));
-        myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
-    }
-    /*
-    for (i = 0; i < myObstacles.length; i += 1) {
-
-        myObstacles[i].x += -1;
-
-        myObstacles[i].update();
-    }
-    */
-    myScore.text="Time: " + (myGameArea.frameNo/100);
-    myScore.update();
-
-
-    //Select a target
-    //set boolean
-    //while set move till max
-    //if hit, set false select new target and repeat
-
-
-
+    console.log("random element = "+selectedTarget) 
     
-    //TODO: Process the target movements.
-    for (i = 0; i < myTargets.length; i += 1) {
-     var min = Math.ceil(0);
-     var max = Math.floor(myTargets.length);
-     selectedTarget = Math.floor(Math.random() * (max - min + 1)) + min;
-     console.log("random element = "+selectedTarget) 
-      //target is not shot down
-        if(selectedTarget % 2 > 0){
-            if(myTargets[selectedTarget].y > targetOddY){
-                myTargets[selectedTarget].y += -1;
-            }
-        }else{
-            if(myTargets[selectedTarget].y > targetEventY){
-                myTargets[selectedTarget].y += -1;   
-            }
+    myGameArea.clear();
+    if(selectedTarget % 2 > 0){
+        if(myTargets[selectedTarget].y > targetOddY){
+            myTargets[selectedTarget].y += -1;
         }
-        myTargets[selectedTarget].update();        
+    }else{
+        if(myTargets[selectedTarget].y > targetEventY){
+            myTargets[selectedTarget].y += -1;   
+        }
     }
-    //myGamePiece.newPos();
-    //myGamePiece.update();
+    myTargets[selectedTarget].update();    
+    myGameArea.frameNo += 1;
+    myScore.text="Time: " + (myGameArea.frameNo/100);
+    myScore.update();   
+    
+    myRemainingQs.text="Questions remaining:" + questions;
+    myRemainingQs.update();
+    
+	loggedInUser.text="Hello, "+email;
+	loggedInUser.update();
+	
     gameStalls.update();
-
-
-
+    if(questions <=0){
+        myGameArea.clear();
+        myRemainingQs.text="Finished!";
+        myRemainingQs.update();
+        gameStalls.update();
+		loggedInUser.update();
+        clearInterval(interval);
+        return;
+    }
+    
+    if (targetSelected == false) {
+        console.log("target hit, ending..") 
+        myGameArea.clear();
+        myTargets[selectedTarget].y = 330;
+        myTargets[selectedTarget].update();    
+        gameStalls.update();
+        clearInterval(interval);
+        myGameArea.start();
+        questions --;
+        return;
+    } 
+    
 }
 
 function everyinterval(n) {
