@@ -36,14 +36,14 @@
 	firebase.analytics();
 </script>
 <div id="loginArea">
-    Welcome to the Vanquis Game v0.1 Alpha </br>
+    Welcome to the Vanquis Game v0.1 Alpha<br>
     <p id="userpass">Sign in: </p><br>
-    <a if="forgotPW" target="_blank" href="./forgot.html">Forgot Password? Click here</a>
+    <button onclick="sendPasswordReset()">Forgot password, click here</button>
     <canvas id="usernamecanvas" width="350" height="100"></canvas>
     <canvas id="passwordcanvas" width="350" height="100"></canvas>
-    </br>
+    <br>
     <p id="regArea">Or...</p>
-    <button onclick="register()">Register </br> (requires Vanquis Bank Email Account)</button>
+    <button onclick="register()">Register <br> (requires Vanquis Bank Email Account)</button>
     <br>
 </div>
 <div id="emailVerify">

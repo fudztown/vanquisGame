@@ -1,7 +1,5 @@
 /*!
  *  Pete's Vanquis Bank Game v0.1
- *
- *
  *  This is free to use and update as you wish, not licensed
  *  Just a bit of fun!
  *
@@ -39,17 +37,7 @@ function startGame() {
     myGamePiece = new component(30, 30, "red", 10, 120);
     myGamePiece.gravity = 0.05;
 
-//Add the Targets
-/*
-    End states here:
-    myTargets.push(new component(70, 75, targetImg1, 65, 255, "image"));
-    myTargets.push(new component(70, 150, targetImg2, 105, 180, "image"));
-    myTargets.push(new component(70, 75, targetImg3, 150, 255, "image"));
-    myTargets.push(new component(70, 150, targetImg4, 195, 180, "image"));
-    myTargets.push(new component(70, 75, targetImg5, 240, 255, "image"));
-    myTargets.push(new component(70, 150, targetImg6, 285, 180, "image"));
-
-*/
+    //Add the Targets
     myTargets.push(new component(70, 75, targetImg0, 65, 330, "image","target0"));
     myTargets.push(new component(70, 150, targetImg1, 105, 330, "image","target1"));
     myTargets.push(new component(70, 75, targetImg2, 150, 330, "image","target2"));
@@ -181,7 +169,27 @@ var myGameArea = {
                   }
             });
     },
+    //Go/Retry maybe a count down then start
+    readySet : function() {
+            //Background
+            img = new Image();
+            img.src = mainBackgoundImg
+            this.canvas.width = 588;
+            this.canvas.height = 431;
+            this.context = this.canvas.getContext("2d");
+            document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+            this.context.drawImage(img, 10, 10);
+            //Big button
+            img = new Image();
+            img.src = mainBackgoundImg
+            this.canvas.width = 588;
+            this.canvas.height = 431;
+            this.context = this.canvas.getContext("2d");
+                        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+                        this.context.drawImage(img, 10, 10);
 
+
+    },
     start : function() {
             img = new Image();
             img.src = mainBackgoundImg
@@ -198,8 +206,6 @@ var myGameArea = {
             if(targetSelected == false){
                 targetSelected = true
             }
-
-
 			//hit start then do this.
             interval = setInterval(updateGameArea, 10);
             this.context.drawImage(img, 10, 10);
@@ -276,7 +282,7 @@ var myGameArea = {
       if (firebase.auth().currentUser) {
         // [START signout]
         firebase.auth().signOut();
-        // [END signout]
+        return false;
       } else {
         if (email.length < 4) {
           alert('Please enter an email address.');
@@ -306,8 +312,12 @@ var myGameArea = {
         });
         // [END authwithemail]
       }
-      alert("Login Successful!");
-      return true;
+      if(firebase.auth().currentUser){
+            alert("Login Successful!");
+            return true;
+      }
+      alert("Login Failed");
+      return false;
     }
 
     /**
@@ -327,51 +337,32 @@ var myGameArea = {
 		});
       // [END sendemailverification]
     }
-
-    /**
-     * initApp handles setting up UI event listeners and registering Firebase auth listeners:
-     *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
-     *    out, and that is where we update the UI.
-     */
-    function initApp() {
-      // Listening for auth state changes.
-      // [START authstatelistener]
-      firebase.auth().onAuthStateChanged(function(user) {
-        // [START_EXCLUDE silent]
-        document.getElementById('quickstart-verify-email').disabled = true;
-        // [END_EXCLUDE]
-        if (user) {
-          // User is signed in.
-          var displayName = user.displayName;
-          var email = user.email;
-          var emailVerified = user.emailVerified;
-          var photoURL = user.photoURL;
-          var isAnonymous = user.isAnonymous;
-          var uid = user.uid;
-          var providerData = user.providerData;
-          // [START_EXCLUDE]
-          document.getElementById('quickstart-sign-in-status').textContent = 'Signed in';
-          document.getElementById('quickstart-sign-in').textContent = 'Sign out';
-          document.getElementById('quickstart-account-details').textContent = JSON.stringify(user, null, '  ');
-          if (!emailVerified) {
-            document.getElementById('quickstart-verify-email').disabled = false;
+    function sendPasswordReset() {
+          // [START sendpasswordemail]
+          if(email == null){
+            alert('Please enter an email address');
+            return;
           }
-          // [END_EXCLUDE]
-        } else {
-          // User is signed out.
-          // [START_EXCLUDE]
-          document.getElementById('quickstart-sign-in-status').textContent = 'Signed out';
-          document.getElementById('quickstart-sign-in').textContent = 'Sign in';
-          document.getElementById('quickstart-account-details').textContent = 'null';
-          // [END_EXCLUDE]
+          firebase.auth().sendPasswordResetEmail(email).then(function() {
+            // Password Reset Email Sent!
+            // [START_EXCLUDE]
+            alert('Password Reset Email Sent!');
+            // [END_EXCLUDE]
+          }).catch(function(error) {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // [START_EXCLUDE]
+            if (errorCode == 'auth/invalid-email') {
+              alert(errorMessage);
+            } else if (errorCode == 'auth/user-not-found') {
+              alert(errorMessage);
+            }
+            console.log(error);
+            // [END_EXCLUDE]
+          });
+          // [END sendpasswordemail];
         }
-        // [START_EXCLUDE silent]
-        document.getElementById('quickstart-sign-in').disabled = false;
-        // [END_EXCLUDE]
-      });
-      // [END authstatelistener]
-    }
-
 
 function component(width, height, color, x, y, type, name) {
     this.type = type;
