@@ -4,68 +4,75 @@
  *  Just a bit of fun!
  *
  */
-var myGamePiece;
-var myObstacles = [];
-var myTargets = [];
-var myScore;
+let myGamePiece;
+const myTargets = [];
+let myScore;
 //target is selected
-var targetSelected = true;
-var selectedTarget = -1;
+let targetSelected = true;
+let selectedTarget = -1;
 
 //background and stall front images
-var mainBackgoundImg = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/mainCanvasBackground.png?alt=media&token=ecef3fac-ab06-4375-80f0-e3d4d3b9ff68";
-var stallBottom = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/stallBottom.png?alt=media&token=f0e58bad-6520-44c3-a410-645fa4f34ac9";
+const mainBackgoundImg = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/mainCanvasBackground.png?alt=media&token=ecef3fac-ab06-4375-80f0-e3d4d3b9ff68";
+const stallBottom = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/stallBottom.png?alt=media&token=f0e58bad-6520-44c3-a410-645fa4f34ac9";
 
 //target images
-var targetImg0 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target1.png?alt=media&token=396992c3-5dbb-4655-b53e-18f974669891";
-var targetImg1 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target2.png?alt=media&token=2dc6ee00-6c33-4175-aefa-780a45397206";
-var targetImg2 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target3.png?alt=media&token=85448202-89f9-43ca-a13b-0a52cce7a207";
-var targetImg3 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target4.png?alt=media&token=efd010c3-01bf-474a-b2d4-33af69be5692";
-var targetImg4 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target5.png?alt=media&token=f2b96a09-4354-4df1-a9f8-1c2e479bdcf5";
-var targetImg5 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target6.png?alt=media&token=cb792400-876b-4b17-8840-df563c6cc472";
+const targetImg0 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target1.png?alt=media&token=396992c3-5dbb-4655-b53e-18f974669891";
+const targetImg1 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target2.png?alt=media&token=2dc6ee00-6c33-4175-aefa-780a45397206";
+const targetImg2 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target3.png?alt=media&token=85448202-89f9-43ca-a13b-0a52cce7a207";
+const targetImg3 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target4.png?alt=media&token=efd010c3-01bf-474a-b2d4-33af69be5692";
+const targetImg4 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target5.png?alt=media&token=f2b96a09-4354-4df1-a9f8-1c2e479bdcf5";
+const targetImg5 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/target6.png?alt=media&token=cb792400-876b-4b17-8840-df563c6cc472";
 
 //small and large sign target position when coming up
-var targetOddY = 180;
-var targetEventY = 255;
-var interval;
+const targetOddY = 180;
+const targetEventY = 255;
+let interval;
 //Sign in details
-var email;
-var password;
-var username;
+let email;
+let password;
 
+//Components
+let gameStalls;
+let myRemainingQs;
+let questions;
+let loggedInUser;
+
+/**
+ * @param {{firebase:$ObjMap}} data
+ * @param {{firebase.auth():function}} data
+ * @param {{firebase:auth.onAuthStateChanged:function}} data
+ */
 function startGame() {
-    myGamePiece = new component(30, 30, "red", 10, 120);
-    myGamePiece.gravity = 0.05;
 
     //Add the Targets
-    myTargets.push(new component(70, 75, targetImg0, 65, 330, "image","target0"));
-    myTargets.push(new component(70, 150, targetImg1, 105, 330, "image","target1"));
-    myTargets.push(new component(70, 75, targetImg2, 150, 330, "image","target2"));
-    myTargets.push(new component(70, 150, targetImg3, 195, 330, "image","target3"));
-    myTargets.push(new component(70, 75, targetImg4, 240, 330, "image","target4"));
-    myTargets.push(new component(70, 150, targetImg5, 285, 330, "image","target5"));
+    myTargets.push(new Component(70, 75, targetImg0, 65, 330, "image","target0"));
+    myTargets.push(new Component(70, 150, targetImg1, 105, 330, "image","target1"));
+    myTargets.push(new Component(70, 75, targetImg2, 150, 330, "image","target2"));
+    myTargets.push(new Component(70, 150, targetImg3, 195, 330, "image","target3"));
+    myTargets.push(new Component(70, 75, targetImg4, 240, 330, "image","target4"));
+    myTargets.push(new Component(70, 150, targetImg5, 285, 330, "image","target5"));
 
 
     //Set Stall image
-    gameStalls = new component(325, 140, stallBottom, 45, 330, "image");
+    gameStalls = new Component(325, 140, stallBottom, 45, 330, "image");
 
 	//score
-    myScore = new component("20px", "Consolas", "white", 440, 416, "text");
+    myScore = new Component("20px", "Consolas", "white", 440, 416, "text");
 
     //Questions remaining
-    myRemainingQs = new component("10px", "Consolas", "black", 340, 30, "text");
+    myRemainingQs = new Component("10px", "Consolas", "black", 340, 30, "text");
     questions = 6;
 
 	//user
-	loggedInUser = new component("10px", "Consolas", "black", 30, 30, "text");
+    loggedInUser = new Component("10px", "Consolas", "black", 30, 30, "text");
 
 	//Get login areas and hide them
-	var loginArea = document.getElementById("loginArea")
-	loginArea.style.display = "none";
-	var emailVerify = document.getElementById("emailVerify")
-	emailVerify.style.display = "none";
-	var signup = document.getElementById("signup")
-	signup.style.display = "none";
+    const loginArea = document.getElementById("loginArea");
+    loginArea.style.display = "none";
+    const emailVerify = document.getElementById("emailVerify");
+    emailVerify.style.display = "none";
+    const signup = document.getElementById("signup");
+    signup.style.display = "none";
 
     firebase.auth().onAuthStateChanged(function(user) {
 
@@ -75,13 +82,13 @@ function startGame() {
 						emailVerify.style.display = "none";
 						signup.style.display = "none";
                       // User is signed in.
-                      var displayName = user.displayName;
+                      let displayName = user.displayName;
                       email = user.email;
-                      var emailVerified = user.emailVerified;
-                      var photoURL = user.photoURL;
-                      var isAnonymous = user.isAnonymous;
-                      var uid = user.uid;
-                      var providerData = user.providerData;
+                      let emailVerified = user.emailVerified;
+                      let photoURL = user.photoURL;
+                      let isAnonymous = user.isAnonymous;
+                      let uid = user.uid;
+                      let providerData = user.providerData;
 					  if(emailVerified){
 						myGameArea.start();
 					  }else{
@@ -197,13 +204,13 @@ var myGameArea = {
             this.canvas.height = 431;
             this.context = this.canvas.getContext("2d");
             document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-            if(this.frameNo == null || this.frameNo == 0){
+            if(this.frameNo == null || this.frameNo === 0){
 			this.frameNo = 0;
 			}
             this.min = Math.ceil(0);
             this.max = Math.floor(myTargets.length-1);
             selectedTarget = Math.floor(Math.random() * (this.max - this.min + 1)) + this.min;
-            if(targetSelected == false){
+            if(targetSelected === false){
                 targetSelected = true
             }
 			//hit start then do this.
@@ -259,7 +266,7 @@ var myGameArea = {
         var errorCode = error.code;
         var errorMessage = error.message;
         // [START_EXCLUDE]
-        if (errorCode == 'auth/weak-password') {
+        if (errorCode === 'auth/weak-password') {
           alert('The password is too weak.');
           return false;
         } else {
@@ -364,7 +371,7 @@ var myGameArea = {
           // [END sendpasswordemail];
         }
 
-function component(width, height, color, x, y, type, name) {
+function Component(width, height, color, x, y, type, name) {
     this.type = type;
     this.name = name;
     this.score = 0;
@@ -410,15 +417,15 @@ function component(width, height, color, x, y, type, name) {
         }
     }
     this.crashWith = function(otherobj) {
-        var myleft = this.x;
-        var myright = this.x + (this.width);
-        var mytop = this.y;
-        var mybottom = this.y + (this.height);
-        var otherleft = otherobj.x;
-        var otherright = otherobj.x + (otherobj.width);
-        var othertop = otherobj.y;
-        var otherbottom = otherobj.y + (otherobj.height);
-        var crash = true;
+        const myleft = this.x;
+        const myright = this.x + (this.width);
+        const mytop = this.y;
+        const mybottom = this.y + (this.height);
+        const otherleft = otherobj.x;
+        const otherright = otherobj.x + (otherobj.width);
+        const othertop = otherobj.y;
+        const otherbottom = otherobj.y + (otherobj.height);
+        const crash = true;
         if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
             crash = false;
         }
@@ -429,7 +436,7 @@ function component(width, height, color, x, y, type, name) {
 }
 
 function updateGameArea() {
-    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+    let x, height, gap, minHeight, maxHeight, minGap, maxGap;
     console.log("random element = "+selectedTarget)
 
     myGameArea.clear();
