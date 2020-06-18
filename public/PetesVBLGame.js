@@ -24,6 +24,7 @@ const targetImg5 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.apps
 
 //Start button images
 const startImg0 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/playbutton_green.png?alt=media&token=d8519cf6-6302-4a66-8dc3-ff5dace226eb";
+let startButtonOn = false;
 
 //TODO: add mouse over colour change
 //const startImg1 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/playbutton_red.png?alt=media&token=10f8cf86-318e-40bf-a148-dbd7e5b7e2f6";
@@ -47,7 +48,6 @@ let img = new Image();
 
 
 function startGame() {
-
     //Add the Targets
     myTargets.push(new Component(70, 75, targetImg0, 65, 330, "image", "target0"));
     myTargets.push(new Component(70, 150, targetImg1, 105, 330, "image", "target1"));
@@ -55,23 +55,17 @@ function startGame() {
     myTargets.push(new Component(70, 150, targetImg3, 195, 330, "image", "target3"));
     myTargets.push(new Component(70, 75, targetImg4, 240, 330, "image", "target4"));
     myTargets.push(new Component(70, 150, targetImg5, 285, 330, "image", "target5"));
-
     //Start Button
-    startButton = new Component(320, 250, startImg0, 30, 30, "image");
-
+    startButton = new Component(320, 250, startImg0, 100, 50, "image");
     //Set Stall image
     gameStalls = new Component(325, 140, stallBottom, 45, 330, "image");
-
     //score
     myScore = new Component("20px", "Consolas", "white", 440, 416, "text");
-
     //Questions remaining
     myRemainingQs = new Component("10px", "Consolas", "black", 340, 30, "text");
     questions = 6;
-
     //user
     loggedInUser = new Component("10px", "Consolas", "black", 30, 30, "text");
-
     //Get login areas and hide them
     const loginArea = document.getElementById("loginArea");
     loginArea.style.display = "none";
@@ -79,9 +73,7 @@ function startGame() {
     emailVerify.style.display = "none";
     const signup = document.getElementById("signup");
     signup.style.display = "none";
-
     firebase.auth().onAuthStateChanged(function (user) {
-
         if (user) {
             //remove login things.
             loginArea.style.display = "none";
@@ -101,9 +93,20 @@ function startGame() {
             myGameArea.loginEmail();
             loginArea.style.display = "block";
         }
-
     });
+}
 
+function startButtonClick (event) {
+    let canvas = document.createElement("canvas");
+    let elemLeft = canvas.offsetLeft + canvas.clientLeft,
+        elemTop = canvas.offsetTop + canvas.clientTop;
+    let x = event.pageX - elemLeft,
+        y = event.pageY - elemTop;
+    //alert('Click recorded ' + x + ' ' + y + 'target 0 Top '+ myTargets[0].y);
+    if (y > startButton.y && y < startButton.y + startButton.height
+        && x > startButton.x && x < startButton.x + startButton.width) {
+        myGameArea.start();
+    }
 }
 
 
@@ -120,6 +123,7 @@ function startGame() {
 
 let myGameArea = {
     canvas: document.createElement("canvas"),
+    frameNo : 0,
     loginEmail: function () {
         let canv = document.getElementById("usernamecanvas");
         canv.style.display = "block";
@@ -138,7 +142,7 @@ let myGameArea = {
             innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
             placeHolder: 'Please enter your email...',
             onsubmit: function () {
-                var canv = document.getElementById("usernamecanvas")
+                let canv = document.getElementById("usernamecanvas")
                 this.context = canv.getContext("2d");
                 this.context.clearRect(0, 0, 350, 100);
                 canv.style.display = "none";
@@ -169,7 +173,7 @@ let myGameArea = {
             onsubmit: function () {
                 password = input2.value();
                 if (toggleSignIn()) {
-                    var canv = document.getElementById("loginArea")
+                    let canv = document.getElementById("loginArea")
                     canv.style.display = "none";
                     myGameArea.readySet();
                 } else {
@@ -181,32 +185,39 @@ let myGameArea = {
     },
     //Go/Retry maybe a count down then start
     readySet: function () {
+        //
         //Background
-        img.src = mainBackgoundImg
+        startButtonOn = true;
         this.canvas.width = 588;
         this.canvas.height = 431;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-        startButton.update();
-        this.context.drawImage(img, 10, 10);
+        img = new Image();
+        img.onload = function(){
+            myGameArea.context.drawImage(img, 10, 10);
+            let startImage = new Image();
+            startImage.onload = function(){
+                myGameArea.context.drawImage(
+                    startImage,
+                    startButton.x,
+                    startButton.y,
+                    startButton.width,
+                    startButton.height);
+            };
+            startImage.src = startImg0;
+        }
+        img.src = mainBackgoundImg
         //Big button
-
-        let elemLeft = this.canvas.offsetLeft + this.canvas.clientLeft,
-            elemTop = this.canvas.offsetTop + this.canvas.clientTop;
-        this.canvas.addEventListener('click', function (event) {
-            let x = event.pageX - elemLeft,
-                y = event.pageY - elemTop;
-            //alert('Click recorded ' + x + ' ' + y + 'target 0 Top '+ myTargets[0].y);
-            if (y > startButton.y && y < startButton.y + startButton.height
-                && x > startButton.x && x < startButton.x + startButton.width) {
-                myGameArea.start();
-                let canv = document.getElementById("passwordcanvas");
-                canv.removeEventListener('click', function(event){},false);            }
-        }, false);
+        this.canvas.addEventListener('click', startButtonClick , false);
     },
     start: function () {
-        //img = new Image();
-        //img.src = mainBackgoundImg
+
+        //Remove event listener for start button.
+        if(startButtonOn){
+            this.canvas.removeEventListener('click', startButtonClick,false);
+            startButtonOn = false;
+        }
+
         this.canvas.width = 588;
         this.canvas.height = 431;
         this.context = this.canvas.getContext("2d");
@@ -244,13 +255,11 @@ let myGameArea = {
     },
     clear: function () {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        //img = new Image();
+        img = new Image();
         img.src = mainBackgoundImg
         this.context.drawImage(img, 10, 10);
     }
 }
-
-
 /**
  * Key class for creating items on the canvas
  * @param width
