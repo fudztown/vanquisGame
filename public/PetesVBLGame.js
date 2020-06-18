@@ -211,6 +211,8 @@ let myGameArea = {
         this.canvas.addEventListener('click', startButtonClick , false);
     },
     start: function () {
+        img = new Image();
+        img.src = mainBackgoundImg
 
         //Remove event listener for start button.
         if(startButtonOn){
