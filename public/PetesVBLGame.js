@@ -29,6 +29,10 @@ let startButtonOn = false;
 //TODO: add mouse over colour change
 //const startImg1 = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/playbutton_red.png?alt=media&token=10f8cf86-318e-40bf-a148-dbd7e5b7e2f6";
 
+//Score Screen
+const scoreScreenImg = "https://firebasestorage.googleapis.com/v0/b/vanquisgame.appspot.com/o/scoreScreen.png?alt=media&token=919bdee7-1e43-4d5f-8da5-71f8cf8a61bc";
+
+
 //small and large sign target position when coming up
 const targetOddY = 180;
 const targetEventY = 255;
@@ -43,8 +47,12 @@ let myRemainingQs;
 let questions;
 let loggedInUser;
 let startButton;
+let scoreScreenTitle;
+let scoresTable;
 //Background img object
 let img = new Image();
+//End Game Boolean
+let gameEnded = false;
 
 
 function startGame() {
@@ -66,6 +74,8 @@ function startGame() {
     questions = 6;
     //user
     loggedInUser = new Component("10px", "Consolas", "black", 30, 30, "text");
+    //Score Screen Title
+    scoreScreenTitle = new Component("10px", "Consolas", "black", 30, 60, "text");
     //Get login areas and hide them
     const loginArea = document.getElementById("loginArea");
     loginArea.style.display = "none";
@@ -96,7 +106,7 @@ function startGame() {
     });
 }
 
-function startButtonClick (event) {
+function startButtonClick(event) {
     let canvas = document.createElement("canvas");
     let elemLeft = canvas.offsetLeft + canvas.clientLeft,
         elemTop = canvas.offsetTop + canvas.clientTop;
@@ -123,7 +133,7 @@ function startButtonClick (event) {
 
 let myGameArea = {
     canvas: document.createElement("canvas"),
-    frameNo : 0,
+    frameNo: 0,
     loginEmail: function () {
         let canv = document.getElementById("usernamecanvas");
         canv.style.display = "block";
@@ -193,10 +203,10 @@ let myGameArea = {
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         img = new Image();
-        img.onload = function(){
+        img.onload = function () {
             myGameArea.context.drawImage(img, 10, 10);
             let startImage = new Image();
-            startImage.onload = function(){
+            startImage.onload = function () {
                 myGameArea.context.drawImage(
                     startImage,
                     startButton.x,
@@ -208,15 +218,15 @@ let myGameArea = {
         }
         img.src = mainBackgoundImg
         //Big button
-        this.canvas.addEventListener('click', startButtonClick , false);
+        this.canvas.addEventListener('click', startButtonClick, false);
     },
     start: function () {
         img = new Image();
         img.src = mainBackgoundImg
 
         //Remove event listener for start button.
-        if(startButtonOn){
-            this.canvas.removeEventListener('click', startButtonClick,false);
+        if (startButtonOn) {
+            this.canvas.removeEventListener('click', startButtonClick, false);
             startButtonOn = false;
         }
 
@@ -260,8 +270,26 @@ let myGameArea = {
         img = new Image();
         img.src = mainBackgoundImg
         this.context.drawImage(img, 10, 10);
+    },
+    scoreScreen: function () {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        img = new Image();
+        //Load the background then load the player score, then maybe do some clever things with high scores
+        img.onload = function () {
+            myGameArea.context.drawImage(img, 10, 10);
+            scoreScreenTitle.text = "Well done " + email + " your time was : " + myGameArea.frameNo / 100;
+            myGameArea.context.font = scoreScreenTitle.width + " " + scoreScreenTitle.height;
+            myGameArea.context.fillStyle = scoreScreenTitle.color;
+            myGameArea.context.fillText(scoreScreenTitle.text, scoreScreenTitle.x, scoreScreenTitle.y);
+        }
+        img.src = scoreScreenImg;
+        //TODO: Record the score / create user account
+        //TODO: Show scores on a refreshing thread
     }
 }
+
 /**
  * Key class for creating items on the canvas
  * @param width
@@ -333,11 +361,16 @@ function updateGameArea() {
         gameStalls.update();
         loggedInUser.update();
         clearInterval(interval);
+        gameEnded = true;
+        myGameArea.scoreScreen();
         return;
     }
 
     if (targetSelected === false) {
         console.log("target hit, ending..")
+        //Show Question
+
+        //TODO: Below will trigger when quesntio is answered
         myGameArea.clear();
         myTargets[selectedTarget].y = 330;
         myTargets[selectedTarget].update();
@@ -348,6 +381,89 @@ function updateGameArea() {
     }
 
 }
+
+/**
+ * START Firestore Queries
+ */
+
+let questions = [];
+
+function VblQuestions() { // eslint-disable-line no-redeclare
+    this.filters = {
+        city: '',
+        price: '',
+        category: '',
+        sort: 'Rating'
+    };
+
+    this.dialogs = {};
+
+    const that = this;
+
+    firebase.firestore().enablePersistence()
+        .then(function () {
+            return userIsSignedIn();
+        })
+        .then(function () {
+            that.prototype.getAllQuestions();
+        }).catch(function (err) {
+        console.log(err);
+    });
+}
+
+//TODO fix this on change stuff for dynamic score updates!
+VblQuestions.prototype.getAllScores = function () {
+    const query = firebase.firestore()
+        .collection('Users')
+        .limit(50);
+    this.getDocumentsInQuery(query);
+};
+
+VblQuestions.prototype.getAllQuestions = function () {
+    firestore.collection('Questions').get().then((snapshot) => {
+        snapshot.docs.forEach(doc => {
+            populateQuestion(doc);
+        })
+    })
+};
+
+VblQuestions.prototype.getDocumentsInQuery = function (query) {
+    query.onSnapshot((snapshot) => {
+        if (!snapshot.size) {
+            return populateQuestion();
+        }
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added' || change.type === 'modified') {
+                populateQuestion(change.doc);
+            }
+        });
+    });
+};
+
+function populateQuestion(doc) {
+    questions.push(new Question(doc.data().A, doc.data().B, doc.data().C, doc.data().D, doc.data().correct, doc.data().question))
+}
+
+function Question(a, b, c, d, correct, question) {
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+    this.correct = correct;
+    this.question = question;
+    this.correctAnswer = function (guess) {
+        if (guess.toLowerCase() === this.correct) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+/**
+ * END Firestore queries
+ */
+
 
 /**
  * START USER MANAGEMENT CODE
@@ -471,6 +587,17 @@ function sendEmailVerification() {
     // [END sendemailverification]
 }
 
+function userIsSignedIn() {
+    firebase.auth().onAuthStateChanged(function (user) {
+        if (user) {
+            return true;
+        } else {
+            return false;
+        }
+    });
+
+}
+
 function sendPasswordReset() {
     // [START sendpasswordemail]
     if (email === null) {
@@ -497,6 +624,7 @@ function sendPasswordReset() {
     });
     // [END sendpasswordemail];
 }
+
 /**
  * END USER MANAGEMENT CODE
  */
